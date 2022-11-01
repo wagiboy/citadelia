@@ -120,7 +120,7 @@ contract Citadelia {
      *  preconditions (modifiers)
      * ------------------------------------------------ */    
     modifier ownerOnly() {
-        require(msg.sender == owner, "You must be the owner to call this function.");
+        require(msg.sender == owner, "Callee must be the contract owner to call this function.");
         _;
     }    
 
