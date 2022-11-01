@@ -252,7 +252,7 @@ contract Citadelia {
         spendingRequest.approvalsCount++;
     }
 
-    function finalizeSpendingRequest(uint8 pid, uint8 srid) public {
+    function finalizeSpendingRequest(uint8 pid, uint8 srid) public ownerOnly {
         /* After sufficent approvals the project owner is permitted to transfer
          * the approved funds to the spending request's vendor.
          * -------------------------------------------------------------------- */
