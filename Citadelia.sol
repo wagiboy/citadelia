@@ -228,6 +228,10 @@ contract Citadelia {
     }
 
     function approveSpendingRequest(uint8 pid, uint8 srid) public {
+        /* Project contributors are permitted to approve (vote) 
+         * for spending requests
+         * -------------------------------------------------------------------- */
+
         // assert pid and srid are given
         require(pid  != 0, "pid must be specified");
         require(srid != 0, "srid must be specified");
@@ -249,6 +253,10 @@ contract Citadelia {
     }
 
     function finalizeSpendingRequest(uint8 pid, uint8 srid) public {
+        /* After sufficent approvals the project owner is permitted to transfer
+         * the approved funds to the spending request's vendor.
+         * -------------------------------------------------------------------- */
+
         // assert pid and srid are given
         require(pid  != 0, "pid must be specified");
         require(srid != 0, "srid must be specified");
