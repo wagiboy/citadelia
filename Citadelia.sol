@@ -3,6 +3,7 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 import "@openzeppelin/contracts@4.7.2/utils/Strings.sol";
+import "hardhat/console.sol";
 
 contract Citadelia {
 
@@ -101,7 +102,7 @@ contract Citadelia {
     function getSpendingRequests(uint8 pid) external view ownerOnly returns (BasicSpendingRequest[] memory) {
         require(pid != 0, "pid must be specified");
 
-        SpendingRequest[] storage spendingRequests = projects[pid].spendingRequests;
+        SpendingRequest[] storage spendingRequests = projects[pid-1].spendingRequests;
         BasicSpendingRequest[] memory basicSpendingRequests = new BasicSpendingRequest[](spendingRequests.length);
 
         for (uint8 i=0; i < projects.length; i++) {
@@ -181,10 +182,13 @@ contract Citadelia {
         require(amountToSpend != 0,             "The amountToSpend is required.");
         require(vid != 0,                       "The vid of the vendor is required.");
 
-        SpendingRequest[] storage spendingRequests = projects[pid].spendingRequests;
-        uint i = projects[pid].spendingRequests.length;
+        console.log("createSpendingRequest(pid=%s, pid-1=%s)", pid, pid-1);
+
+        Project storage project = projects[pid-1];
+        SpendingRequest[] storage spendingRequests = project.spendingRequests;
+        uint i = project.spendingRequests.length;
         spendingRequests.push();
-        SpendingRequest storage spendingRequest = projects[pid].spendingRequests[i];
+        SpendingRequest storage spendingRequest = project.spendingRequests[i];
 
         spendingRequest.srid        = i+1;  
         spendingRequest.name        = name;
@@ -212,7 +216,7 @@ contract Citadelia {
         }
         require(contributorExists);
             
-        Project storage project = projects[pid];
+        Project storage project = projects[pid-1];
 
         // assert contributed amount of eth meets the minimum contribution
         require(msg.value >= project.minimumContribution, concat("contribution amount must be greater or equal to wei=", Strings.toString(project.minimumContribution)));
@@ -237,8 +241,8 @@ contract Citadelia {
         require(srid != 0, "srid must be specified");
 
         // fetching state variables 
-        Project storage project                     = projects[pid];
-        SpendingRequest storage spendingRequest     = project.spendingRequests[srid];
+        Project storage project                     = projects[pid-1];
+        SpendingRequest storage spendingRequest     = project.spendingRequests[srid-1];
         mapping(address => bool) storage approvals  = spendingRequest.approvals;
 
         // assert caller/contributor has contributed to this project
@@ -262,16 +266,17 @@ contract Citadelia {
         require(srid != 0, "srid must be specified");
 
         // fetching state variables 
-        SpendingRequest storage spendingRequest = projects[pid].spendingRequests[srid];
+        Project storage project                 = projects[pid-1];
+        SpendingRequest storage spendingRequest = project.spendingRequests[srid-1];
         
         // assert SpendingRequest is not yet complete
         require(!spendingRequest.complete);
 
         // assert minimum 50% of project contributors have approved
-        require(spendingRequest.approvalsCount >= projects[pid].contributorsCount / 2, "A minimum of 50% of project contributors must have approved this spending request before finalizing.");
+        require(spendingRequest.approvalsCount >= project.contributorsCount / 2, "A minimum of 50% of project contributors must have approved this spending request before finalizing.");
 
         // transfer spending requests amound in wei to vendor
-        vendors[spendingRequest.vid].walletAddress.transfer(spendingRequest.amountInWei);
+        vendors[spendingRequest.vid-1].walletAddress.transfer(spendingRequest.amountInWei);
 
         // mark this spending request as completed
         spendingRequest.complete = true;
