@@ -281,6 +281,8 @@ contract Citadelia {
      *  internal helper functions
      * ------------------------------------------------ */ 
     function concat(string memory a, string memory b) internal pure returns(string memory){
+        /* concatenation of 2 strings 
+         * -------------------------- */
         return (string(abi.encodePacked(a, b)));
     } 
 }
