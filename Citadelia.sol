@@ -38,7 +38,7 @@ contract Citadelia {
         uint    pid;
         string  name;
         string  description;
-        uint    minimumContribution;     //= 0.001; // 1 finney minimum contribution
+        uint    minimumContribution;            // e.g 0.001 eth or 1 finney or 1000000000000000 wei
         address payable walletAddress;
         mapping(address => bool) contributors;  // list of the addresses of contributors who have donated for this project
         uint8   contributorsCount;
@@ -126,15 +126,24 @@ contract Citadelia {
     }    
 
     /* -------------------------------------------------
+     *  events
+     * ------------------------------------------------ */    
+
+    event Donation(address indexed contributor, uint amount, uint8 pid);
+    event Approval(address indexed contributor, uint8 pid, uint8 srid);
+    event Completion(uint8 pid, uint8 srid);
+
+
+    /* -------------------------------------------------
      *  Creation of data functions
      * ------------------------------------------------ */ 
     function createContributor(string memory name, address contributorAddress) public ownerOnly {
-        require(bytes(name).length != 0,          "The contributor name is required.");
+        require(bytes(name).length != 0, "The contributor name is required.");
         require(contributorAddress != address(0), "The address of the contributor is required.");
 
         Contributor memory contributor = Contributor({
             name: name,
-            walletAddress: msg.sender
+            walletAddress: contributorAddress
         });
 
         contributors.push(contributor);
@@ -229,6 +238,8 @@ contract Citadelia {
 
         // increment contributor count
         project.contributorsCount++;
+
+        emit Donation(msg.sender, msg.value, pid);
     }
 
     function approveSpendingRequest(uint8 pid, uint8 srid) public {
@@ -254,6 +265,8 @@ contract Citadelia {
         // record new approval
         approvals[msg.sender] = true;
         spendingRequest.approvalsCount++;
+
+        emit Approval(msg.sender, pid, srid);
     }
 
     function finalizeSpendingRequest(uint8 pid, uint8 srid) public ownerOnly {
@@ -280,6 +293,8 @@ contract Citadelia {
 
         // mark this spending request as completed
         spendingRequest.complete = true;
+
+        emit Completion(pid, srid);
     }
 
     /* -------------------------------------------------
