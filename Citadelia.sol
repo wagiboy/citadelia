@@ -3,7 +3,6 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 import "@openzeppelin/contracts@4.7.2/utils/Strings.sol";
-import "hardhat/console.sol";
 
 contract Citadelia {
 
@@ -128,7 +127,6 @@ contract Citadelia {
     /* -------------------------------------------------
      *  events
      * ------------------------------------------------ */    
-
     event Donation(address indexed contributor, uint amount, uint8 pid);
     event Approval(address indexed contributor, uint8 pid, uint8 srid);
     event Completion(uint8 pid, uint8 srid);
@@ -190,8 +188,6 @@ contract Citadelia {
         require(bytes(description).length != 0, "An description of the spending request is required.");
         require(amountToSpend != 0,             "The amountToSpend is required.");
         require(vid != 0,                       "The vid of the vendor is required.");
-
-        console.log("createSpendingRequest(pid=%s, pid-1=%s)", pid, pid-1);
 
         Project storage project = projects[pid-1];
         SpendingRequest[] storage spendingRequests = project.spendingRequests;
