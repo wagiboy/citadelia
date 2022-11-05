@@ -19,22 +19,26 @@ contract Citadelia {
      *  Roles/User structs
      * ------------------------------------------------ */  
     struct Contributor {
+        uint8   cid;
         string  name;
+        string  username;
         address walletAddress;
+        uint    balance;
     }
 
     struct Vendor {
-        uint    vid;
+        uint8   vid;
         string  name;
         string  description;
         address payable walletAddress;
+        uint    balance;
     }
 
     /* -------------------------------------------------
      *  Project structs
      * ------------------------------------------------ */
     struct Project {
-        uint    pid;
+        uint8   pid;
         string  name;
         string  description;
         uint    minimumContribution;            // e.g 0.001 eth or 1 finney or 1000000000000000 wei
@@ -51,6 +55,7 @@ contract Citadelia {
         string  description;
         uint    minimumContribution;
         uint8   contributorsCount;
+        uint    balance;
     }
 
     struct SpendingRequest {
@@ -86,13 +91,18 @@ contract Citadelia {
     /* -------------------------------------------------
      *  Creation of data functions
      * ------------------------------------------------ */ 
-    function createContributor(string memory name, address contributorAddress) public ownerOnly {
+    function createContributor(string memory name, string memory username, address contributorAddress) public ownerOnly {
         require(bytes(name).length != 0, "The contributor name is required.");
         require(contributorAddress != address(0), "The address of the contributor is required.");
 
+        uint cid = contributors.length + 1;
+
         Contributor memory contributor = Contributor({
+            cid: uint8(cid),
             name: name,
-            walletAddress: contributorAddress
+            username: username,
+            walletAddress: contributorAddress,
+            balance: contributorAddress.balance
         });
 
         contributors.push(contributor);
@@ -106,10 +116,11 @@ contract Citadelia {
         uint vid = vendors.length + 1;
 
         Vendor memory vendor = Vendor({
-            vid: vid,
+            vid: uint8(vid),
             name: name,
             description: description,
-            walletAddress: vendorAddress
+            walletAddress: vendorAddress,
+            balance: vendorAddress.balance
         });
 
         vendors.push(vendor);
@@ -126,7 +137,7 @@ contract Citadelia {
         projects.push();
         Project storage project = projects[i];
 
-        project.pid                 = i+1;
+        project.pid                 = uint8(i+1);
         project.name                = name;
         project.description         = description;
         project.minimumContribution = minimumContribution;
@@ -173,6 +184,7 @@ contract Citadelia {
             basicProjects[i].description         = projects[i].description;
             basicProjects[i].minimumContribution = projects[i].minimumContribution;
             basicProjects[i].contributorsCount   = projects[i].contributorsCount;
+            basicProjects[i].balance             = projects[i].walletAddress.balance;
         }
         return basicProjects;
     }
@@ -273,7 +285,7 @@ contract Citadelia {
         return fiftyPercentOrMore( projects[pid-1], projects[pid-1].spendingRequests[srid-1] );
     }
 
-    function finalizeSpendingRequest(uint8 pid, uint8 srid) public {
+    function completeSpendingRequest(uint8 pid, uint8 srid) public {
         /* After sufficent approvals the project owner is permitted to transfer
          * the approved funds to the spending request's vendor.
          * -------------------------------------------------------------------- */
@@ -293,7 +305,7 @@ contract Citadelia {
         require(!spendingRequest.complete, "spending request has already been completed");
 
         // assert minimum 50% of project contributors have approved
-        require(fiftyPercentOrMore(project, spendingRequest), "A minimum of 50% of project contributors must have approved this spending request before finalizing.");
+        require(fiftyPercentOrMore(project, spendingRequest), "A minimum of 50% of project contributors must have approved this spending request before completion.");
 
         // transfer spending requests amound in wei to vendor
         vendors[spendingRequest.vid-1].walletAddress.transfer(spendingRequest.amountInWei);
@@ -317,6 +329,10 @@ contract Citadelia {
         /* returns true of the spending request's approvalCount
          * is 50% or more of the number of project contributors
          * ----------------------------------------------------- */
-        return (spendingRequest.approvalsCount >= project.contributorsCount / 2);
+        if (spendingRequest.approvalsCount == 0) {
+            return false;
+        } else {
+            return (spendingRequest.approvalsCount >= project.contributorsCount / 2);
+        }
     }
 }
