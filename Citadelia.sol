@@ -93,7 +93,7 @@ contract Citadelia {
         
         uint i = projects.length;
 
-        Project project = new Project(pid, name, description, minimumContribution);
+        Project project = new Project(name, description, minimumContribution, this);
 
         projects.push(project.getContractAddress());
 
@@ -149,24 +149,17 @@ contract Citadelia {
  * ------------------------------------------------ */  
 contract Project {
 
-    uint8   pid;
-    string  name;
-    string  description;
-    uint    minimumContribution;            // e.g 0.001 eth or 1 finney or 1000000000000000 wei
-    address payable walletAddress;
-    mapping(address => bool) contributors;  // list of the addresses of contributors who have donated for this project
-    uint8   contributorsCount;
-    SpendingRequest[] spendingRequests;
+    address public owner;
+    Citadelia  citadelia;
 
-    struct BasicProject {
-        // used for returning Project data without arrays and mappings
-        uint    pid;
-        string  name;
-        string  description;
-        uint    minimumContribution;
-        uint8   contributorsCount;
-        uint    balance;
-    }
+    uint8   public pid;
+    string  public name;
+    string  public description;
+    uint    public minimumContribution;          // e.g 0.001 eth or 1 finney or 1000000000000000 wei
+    address payable public walletAddress;
+    mapping(address => bool) contributors;  // list of the addresses of contributors who have donated for this project
+    uint8   public contributorsCount;
+    SpendingRequest[] spendingRequests;
 
     struct SpendingRequest {
         uint    srid;
@@ -190,30 +183,44 @@ contract Project {
         bool    complete;
     }
     
+    /* -------------------------------------------------
+     *  constructor, modifiers, events
+     * ------------------------------------------------- */    
+    constuctor(string memory _name, string memory _description, uint minimumContribution, Citadelia _citadelia) {
+ //         basicProjects[i].pid                 = projects[i].pid;
+    //         basicProjects[i].name                = projects[i].name;
+    //         basicProjects[i].description         = projects[i].description;
+    //         basicProjects[i].minimumContribution = projects[i].minimumContribution;
+    //         basicProjects[i].contributorsCount   = projects[i].contributorsCount;
+    //         basicProjects[i].balance             = projects[i].walletAddress.balance;
+    }
     modifier ownerOnly() {
         require(msg.sender == owner, "Callee must be the contract owner to call this function.");
         _;
     } 
 
+    event Donation(address indexed contributor, uint amount, address project);
+    event Approval(address indexed contributor, address project, uint8 srid);
+    event Completion(address project, uint8 srid);
+
    /* -------------------------------------------------
     *  factory interface
     * ------------------------------------------------ */ 
-    function createSpendingRequest(string memory name, string memory description, uint amountToSpend, uint8 vid) public ownerOnly {
-        require(pid != 0,                       "pid must be specified");
-        require(bytes(name).length != 0,        "The name of the spending request is required.");
-        require(bytes(description).length != 0, "An description of the spending request is required.");
-        require(amountToSpend != 0,             "The amountToSpend is required.");
-        require(vid != 0,                       "The vid of the vendor is required.");
+    function createSpendingRequest(string memory _name, string memory _description, uint _amountToSpend, uint8 _vid) public ownerOnly {
+        require(bytes(_name).length != 0,        "The name of the spending request is required.");
+        require(bytes(_description).length != 0, "An description of the spending request is required.");
+        require(_amountToSpend != 0,             "The amountToSpend is required.");
+        require(_vid != 0,                       "The vid of the vendor is required.");
 
-        uint i = project.spendingRequests.length;
         spendingRequests.push();
-        SpendingRequest storage spendingRequest = spendingRequests[i];
+        uint i = spendingRequests.length;
+        SpendingRequest storage spendingRequest = spendingRequests[i-1];
 
-        spendingRequest.srid        = i+1;  
-        spendingRequest.name        = name;
-        spendingRequest.description = description;
-        spendingRequest.amountInWei = amountToSpend;
-        spendingRequest.vid         = vid;
+        spendingRequest.srid        = i;  
+        spendingRequest.name        = _name;
+        spendingRequest.description = _description;
+        spendingRequest.amountInWei = _amountToSpend;
+        spendingRequest.vid         = _vid;
     }
           
     /* -------------------------------------------------
@@ -236,14 +243,7 @@ contract Project {
     }
 
     /* -------------------------------------------------
-     *  events
-     * ------------------------------------------------ */    
-    event Donation(address indexed contributor, uint amount, address project);
-    event Approval(address indexed contributor, address project, uint8 srid);
-    event Completion(address project, uint8 srid);
-
-    /* -------------------------------------------------
-     *  Action functions
+     *  public interface
      * ------------------------------------------------ */ 
     function fund() public payable {
         /* Contributors fund this project
@@ -297,7 +297,7 @@ contract Project {
         return fiftyPercentOrMore(spendingRequests[srid-1], contributorsCount);
     }
 
-    function completeSpendingRequest(uint8 srid) payable public {
+    function completeSpendingRequest(uint8 srid) public {
         /* After sufficent approvals the project owner is permitted to transfer
          * the approved funds to the spending request's vendor.
          * -------------------------------------------------------------------- */
@@ -315,10 +315,12 @@ contract Project {
         require(!spendingRequest.complete, "spending request has already been completed");
 
         // assert minimum 50% of project contributors have approved
-        require(fiftyPercentOrMore(spendingRequest, contributorCount), "A minimum of 50% of project contributors must have approved this spending request before completion.");
+        require(fiftyPercentOrMore(spendingRequest, contributorsCount), "A minimum of 50% of project contributors must have approved this spending request before completion.");
 
         // transfer spending requests amound in wei to vendor
         vendors[spendingRequest.vid-1].walletAddress.transfer(spendingRequest.amountInWei);
+
+        payable(vendorWalletAddress).call{value: spendingRequest.amountInWei}(abi.encode(spendingRequest.amountInWei));
 
         // mark this spending request as completed
         spendingRequest.complete = true;
@@ -335,14 +337,14 @@ contract Project {
         return (string(abi.encodePacked(a, b)));
     } 
 
-    function fiftyPercentOrMore(SpendingRequest storage spendingRequest, contributorsCount) internal view returns (bool) {
+    function fiftyPercentOrMore(SpendingRequest storage _spendingRequest) internal view returns (bool) {
         /* returns true of the spending request's approvalCount
          * is 50% or more of the number of project contributors
          * ----------------------------------------------------- */
-        if (spendingRequest.approvalsCount == 0) {
+        if (_spendingRequest.approvalsCount == 0) {
             return false;
         } else {
-            return (spendingRequest.approvalsCount >= contributorsCount / 2);
+            return (_spendingRequest.approvalsCount >= contributorsCount / 2);
         }
     }
 }
