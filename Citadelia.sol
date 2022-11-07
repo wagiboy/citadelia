@@ -3,6 +3,16 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 import "@openzeppelin/contracts@4.7.2/utils/Strings.sol";
+import "hardhat/console.sol";
+
+
+    struct Vendor {
+        uint8   vid;
+        string  name;
+        string  description;
+        address payable walletAddress;
+        uint    balance;
+    }
 
 /* -------------------------------------------------
  *  
@@ -19,6 +29,10 @@ contract Citadelia {
     Vendor[]        public vendors;
     address[]       public projects;
     
+    function getVendors() public returns (Vendor[]) {
+        return vendors;
+    }
+
     constructor() {
         owner = msg.sender;
     }
@@ -39,22 +53,16 @@ contract Citadelia {
         uint    balance;
     }
 
-    struct Vendor {
-        uint8   vid;
-        string  name;
-        string  description;
-        address payable walletAddress;
-        uint    balance;
-    }
-
    /* -------------------------------------------------
     *  factory interface
     * ------------------------------------------------ */ 
-    function createContributor(string memory name, string memory username, address contributorAddress) public ownerOnly {
+    function createContributor(string memory name, string memory username, address contributorAddress) external ownerOnly {
         require(bytes(name).length != 0, "The contributor name is required.");
         require(contributorAddress != address(0), "The address of the contributor is required.");
 
         uint cid = contributors.length + 1;
+
+        console.log("createContributor()");
 
         Contributor memory contributor = Contributor({
             cid: uint8(cid),
@@ -67,7 +75,7 @@ contract Citadelia {
         contributors.push(contributor);
     }
 
-    function createVendor(string memory name, string memory description, address payable vendorAddress) public ownerOnly {
+    function createVendor(string memory name, string memory description, address payable vendorAddress) external ownerOnly {
         require(bytes(name).length != 0,        "The vendor name is required.");
         require(bytes(description).length != 0, "An description of the vendor is required.");
         require(vendorAddress != address(0),    "The address of the vendor is required.");
@@ -85,28 +93,16 @@ contract Citadelia {
         vendors.push(vendor);
     }
 
-    function createProject(string memory name, string memory description, uint minimumContribution, address payable walletAddress) public ownerOnly {
+    function createProject(string memory name, string memory description, uint minimumContribution) external ownerOnly {
         require(bytes(name).length != 0,        "The vendor name is required.");
         require(bytes(description).length != 0, "An description of the project is required.");
         require(minimumContribution != 0,       "A minimum contribution of the project is required.");
-        require(walletAddress != address(0),    "A wallet address for the project is required.");
         
         uint i = projects.length;
 
         Project project = new Project(name, description, minimumContribution, this);
 
         projects.push(project.getContractAddress());
-
-        // uint i = projects.length;
-        // // cannot push struct onto array containing mapping. Only pushing empty is a workaround
-        // projects.push();
-        // Project storage project = projects[i];
-
-        // project.pid                 = uint8(i+1);
-        // project.name                = name;
-        // project.description         = description;
-        // project.minimumContribution = minimumContribution;
-        // project.walletAddress       = walletAddress;     
     }
 
    /* -------------------------------------------------
@@ -123,20 +119,6 @@ contract Citadelia {
     function getProjects() external view ownerOnly returns (address[] memory) { 
         return projects;
     }
-
-    // function getProjects() external view ownerOnly returns (BasicProject[] memory) {
-    //     BasicProject[] memory basicProjects = new BasicProject[](projects.length);
-    //     for (uint8 i=0; i < projects.length; i++) {
-    //         basicProjects[i].pid                 = projects[i].pid;
-    //         basicProjects[i].name                = projects[i].name;
-    //         basicProjects[i].description         = projects[i].description;
-    //         basicProjects[i].minimumContribution = projects[i].minimumContribution;
-    //         basicProjects[i].contributorsCount   = projects[i].contributorsCount;
-    //         basicProjects[i].balance             = projects[i].walletAddress.balance;
-    //     }
-    //     return basicProjects;
-    // }
-
 }
 
 /* -------------------------------------------------
@@ -152,7 +134,6 @@ contract Project {
     address public owner;
     Citadelia  citadelia;
 
-    uint8   public pid;
     string  public name;
     string  public description;
     uint    public minimumContribution;          // e.g 0.001 eth or 1 finney or 1000000000000000 wei
@@ -162,11 +143,11 @@ contract Project {
     SpendingRequest[] spendingRequests;
 
     struct SpendingRequest {
-        uint    srid;
+        uint8   srid;
         string  name;
         string  description;
         uint    amountInWei;                 // amount of ether requested for spending request (how much does it cost)
-        uint    vid;                         // vendor who receives the amount of money in wei
+        uint8   vid;                         // vendor who receives the amount of money in wei
         mapping(address => bool) approvals;  // wallet addresses of contributors who have approved this spending request
         uint8   approvalsCount;
         bool    complete;
@@ -174,11 +155,11 @@ contract Project {
 
     struct BasicSpendingRequest {
         // used for returning SpendingRequest data without mapping
-        uint    srid;
+        uint8   srid;
         string  name;
         string  description;
         uint    amountInWei;
-        uint    vid;  // vendor who receives the amount of money in wei
+        uint8   vid;  // vendor who receives the amount of money in wei
         uint8   approvalsCount;
         bool    complete;
     }
@@ -186,14 +167,13 @@ contract Project {
     /* -------------------------------------------------
      *  constructor, modifiers, events
      * ------------------------------------------------- */    
-    constuctor(string memory _name, string memory _description, uint minimumContribution, Citadelia _citadelia) {
- //         basicProjects[i].pid                 = projects[i].pid;
-    //         basicProjects[i].name                = projects[i].name;
-    //         basicProjects[i].description         = projects[i].description;
-    //         basicProjects[i].minimumContribution = projects[i].minimumContribution;
-    //         basicProjects[i].contributorsCount   = projects[i].contributorsCount;
-    //         basicProjects[i].balance             = projects[i].walletAddress.balance;
-    }
+    constructor(string memory _name, string memory _description, uint _minimumContribution, Citadelia _citadelia) {
+        name                = _name;
+        description         = _description;
+        minimumContribution = _minimumContribution;
+        citadelia           = _citadelia;
+    }    
+    
     modifier ownerOnly() {
         require(msg.sender == owner, "Callee must be the contract owner to call this function.");
         _;
@@ -206,7 +186,7 @@ contract Project {
    /* -------------------------------------------------
     *  factory interface
     * ------------------------------------------------ */ 
-    function createSpendingRequest(string memory _name, string memory _description, uint _amountToSpend, uint8 _vid) public ownerOnly {
+    function createSpendingRequest(string memory _name, string memory _description, uint _amountToSpend, uint8 _vid) external ownerOnly {
         require(bytes(_name).length != 0,        "The name of the spending request is required.");
         require(bytes(_description).length != 0, "An description of the spending request is required.");
         require(_amountToSpend != 0,             "The amountToSpend is required.");
@@ -216,7 +196,7 @@ contract Project {
         uint i = spendingRequests.length;
         SpendingRequest storage spendingRequest = spendingRequests[i-1];
 
-        spendingRequest.srid        = i;  
+        spendingRequest.srid        = uint8(i);  
         spendingRequest.name        = _name;
         spendingRequest.description = _description;
         spendingRequest.amountInWei = _amountToSpend;
@@ -226,6 +206,14 @@ contract Project {
     /* -------------------------------------------------
      *  getter functions - returning arrays of structs
      * ------------------------------------------------ */ 
+    function getContractAddress() external view returns (address) {
+        return address(this);
+    }
+
+    function getBalance() external view returns (uint) {
+        return address(this).balance;
+    }
+
     function getSpendingRequests() external view ownerOnly returns (BasicSpendingRequest[] memory) {
 
         BasicSpendingRequest[] memory basicSpendingRequests = new BasicSpendingRequest[](spendingRequests.length);
@@ -245,7 +233,7 @@ contract Project {
     /* -------------------------------------------------
      *  public interface
      * ------------------------------------------------ */ 
-    function fund() public payable {
+    function fund() external payable {
         /* Contributors fund this project
          * with a minimum amount of ether
          * ------------------------------- */
@@ -254,7 +242,7 @@ contract Project {
         require(msg.value >= minimumContribution, concat("contribution amount must be greater or equal to wei=", Strings.toString(minimumContribution)));
 
         // deposit contributed funds onto the project's account
-        address(this).transfer(msg.value);
+        payable(address(this)).transfer(msg.value);
 
         // note that contributor has funded for this particular project
         contributors[msg.sender] = true;
@@ -266,10 +254,9 @@ contract Project {
     }    
 
 
-    function approveSpendingRequest(uint8 srid) public {
+    function approveSpendingRequest(uint8 srid) external {
         /* Project contributors are permitted to approve (vote) for spending requests
          * --------------------------------------------------------------------------- */
-
         // assert srid is given
         require(srid != 0, "srid must be specified");
 
@@ -291,13 +278,13 @@ contract Project {
     }
 
     function canSpendingRequestBeCompleted(uint8 srid) external view returns (bool) {
-        /* returns true if the spending request srid for project pid 
+        /* returns true if the spending request srid 
          * has 50% or more of the contributer's votes/approvals
          * ----------------------------------------------------- */        
-        return fiftyPercentOrMore(spendingRequests[srid-1], contributorsCount);
+        return fiftyPercentOrMore(spendingRequests[srid-1]);
     }
 
-    function completeSpendingRequest(uint8 srid) public {
+    function completeSpendingRequest(uint8 srid) external {
         /* After sufficent approvals the project owner is permitted to transfer
          * the approved funds to the spending request's vendor.
          * -------------------------------------------------------------------- */
@@ -315,12 +302,13 @@ contract Project {
         require(!spendingRequest.complete, "spending request has already been completed");
 
         // assert minimum 50% of project contributors have approved
-        require(fiftyPercentOrMore(spendingRequest, contributorsCount), "A minimum of 50% of project contributors must have approved this spending request before completion.");
+        require(fiftyPercentOrMore(spendingRequest), "A minimum of 50% of project contributors must have approved this spending request before completion.");
 
-        // transfer spending requests amound in wei to vendor
-        vendors[spendingRequest.vid-1].walletAddress.transfer(spendingRequest.amountInWei);
-
-        payable(vendorWalletAddress).call{value: spendingRequest.amountInWei}(abi.encode(spendingRequest.amountInWei));
+        // transfer spending request's amount in wei to the wallet of the vendor
+        Vendor[] memory vendors = citadelia.vendors;
+        //address payable vendorWalletAddress = citadelia.vendors[spendingRequest.vid-1].walletAddress;
+        // vendorWalletAddress.transfer(spendingRequest.amountInWei);
+        //vendorWalletAddress.call{value: spendingRequest.amountInWei}(abi.encode(spendingRequest.amountInWei));
 
         // mark this spending request as completed
         spendingRequest.complete = true;
