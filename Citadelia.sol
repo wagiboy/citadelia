@@ -116,8 +116,6 @@ contract Citadelia {
     function getProjects() external view ownerOnly returns (address[] memory) { 
         return projects;
     }
-
-
 }
 
 /* -------------------------------------------------
@@ -173,7 +171,7 @@ contract Project {
 
         owner = msg.sender;
 
-        console.log("ctor Project(name='%s') address=%s", name, address(this));
+        console.log("ctor Project() address=%s", address(this));
     }    
     
     modifier ownerOnly() {
@@ -244,16 +242,13 @@ contract Project {
         // assert contributed amount of ether meets the minimum requirement
         require(msg.value >= minimumContribution, concat("contribution amount must be greater or equal to wei=", Strings.toString(minimumContribution)));
 
-        // deposit contributed funds onto the project's account
-        payable(address(this)).transfer(msg.value);
-
         // note that contributor has funded for this particular project
         contributors[msg.sender] = true;
 
         // increment contributor count
         contributorsCount++;
 
-        console.log("fund() amount=%d new contributorsCount=%d", msg.value, contributorsCount);        
+        console.log("fund() amount=%d", msg.value);        
 
         emit Donation(msg.sender, msg.value, address(this));
     }    
@@ -279,7 +274,7 @@ contract Project {
         approvals[msg.sender] = true;
         spendingRequest.approvalsCount++;
 
-        console.log("approveSpendingRequest(srid=%d) approvalsCount=%d", srid,spendingRequest.approvalsCount);           
+        console.log("approveSpendingRequest(srid=%d)", srid);           
 
         emit Approval(msg.sender, address(this), srid);
     }
@@ -295,7 +290,7 @@ contract Project {
         /* After sufficent approvals the project owner is permitted to transfer
          * the approved funds to the spending request's vendor.
          * -------------------------------------------------------------------- */
-        console.log("completeSpendingRequest(srid=%d", srid);           
+        console.log("completeSpendingRequest(srid=%d)", srid);           
 
         // assert srid is given
         require(srid != 0, "srid must be specified");
