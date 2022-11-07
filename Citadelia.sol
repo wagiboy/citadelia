@@ -75,7 +75,7 @@ contract Citadelia {
         require(vendorAddress != address(0),    "The address of the vendor is required.");
 
         uint vid = vendors.length + 1;
-        console.log("createVendor() vid=%s vid=%d", vid, vid);
+        console.log("createVendor() vid=%s", vid);
 
         Vendor memory vendor = Vendor({
             vid: uint8(vid),
@@ -136,7 +136,6 @@ contract Project {
     string  public name;
     string  public description;
     uint    public minimumContribution;          // e.g 0.001 eth or 1 finney or 1000000000000000 wei
-    address payable public walletAddress;
     mapping(address => bool) contributors;  // list of the addresses of contributors who have donated for this project
     uint8   public contributorsCount;
     SpendingRequest[] spendingRequests;
@@ -171,6 +170,8 @@ contract Project {
         description         = _description;
         minimumContribution = _minimumContribution;
         citadelia           = Citadelia(_citadelia);
+
+        owner = msg.sender;
 
         console.log("ctor Project(name='%s') address=%s", name, address(this));
     }    
