@@ -5,15 +5,6 @@ pragma solidity >=0.7.0 <0.9.0;
 import "@openzeppelin/contracts@4.7.2/utils/Strings.sol";
 import "hardhat/console.sol";
 
-
-    struct Vendor {
-        uint8   vid;
-        string  name;
-        string  description;
-        address payable walletAddress;
-        uint    balance;
-    }
-
 /* -------------------------------------------------
  *  
  *  Citadelia - main contract, acts as 
@@ -28,10 +19,6 @@ contract Citadelia {
     Contributor[]   public contributors;
     Vendor[]        public vendors;
     address[]       public projects;
-    
-    function getVendors() public returns (Vendor[]) {
-        return vendors;
-    }
 
     constructor() {
         owner = msg.sender;
@@ -53,6 +40,14 @@ contract Citadelia {
         uint    balance;
     }
 
+    struct Vendor {
+        uint8   vid;
+        string  name;
+        string  description;
+        address payable walletAddress;
+        uint    balance;
+    }    
+
    /* -------------------------------------------------
     *  factory interface
     * ------------------------------------------------ */ 
@@ -61,8 +56,7 @@ contract Citadelia {
         require(contributorAddress != address(0), "The address of the contributor is required.");
 
         uint cid = contributors.length + 1;
-
-        console.log("createContributor()");
+        console.log("createContributor() cid=%s", cid);
 
         Contributor memory contributor = Contributor({
             cid: uint8(cid),
@@ -81,6 +75,7 @@ contract Citadelia {
         require(vendorAddress != address(0),    "The address of the vendor is required.");
 
         uint vid = vendors.length + 1;
+        console.log("createVendor() vid=%s", vid);
 
         Vendor memory vendor = Vendor({
             vid: uint8(vid),
@@ -96,9 +91,7 @@ contract Citadelia {
     function createProject(string memory name, string memory description, uint minimumContribution) external ownerOnly {
         require(bytes(name).length != 0,        "The vendor name is required.");
         require(bytes(description).length != 0, "An description of the project is required.");
-        require(minimumContribution != 0,       "A minimum contribution of the project is required.");
-        
-        uint i = projects.length;
+        require(minimumContribution != 0,       "A minimum contribution of the project is required.");    
 
         Project project = new Project(name, description, minimumContribution, this);
 
@@ -116,9 +109,15 @@ contract Citadelia {
         return vendors;
     }
 
+    function getVendorAddress(uint8 vid) public view returns (address payable) {
+        return vendors[vid-1].walletAddress;
+    }
+
     function getProjects() external view ownerOnly returns (address[] memory) { 
         return projects;
     }
+
+
 }
 
 /* -------------------------------------------------
@@ -172,6 +171,8 @@ contract Project {
         description         = _description;
         minimumContribution = _minimumContribution;
         citadelia           = _citadelia;
+
+        console.log("ctor Project(name=%s)", name);
     }    
     
     modifier ownerOnly() {
@@ -195,6 +196,7 @@ contract Project {
         spendingRequests.push();
         uint i = spendingRequests.length;
         SpendingRequest storage spendingRequest = spendingRequests[i-1];
+        console.log("createSpendingRequest() srid=%d", i);        
 
         spendingRequest.srid        = uint8(i);  
         spendingRequest.name        = _name;
@@ -206,7 +208,7 @@ contract Project {
     /* -------------------------------------------------
      *  getter functions - returning arrays of structs
      * ------------------------------------------------ */ 
-    function getContractAddress() external view returns (address) {
+    function getContractAddress() public view returns (address) {
         return address(this);
     }
 
@@ -250,6 +252,8 @@ contract Project {
         // increment contributor count
         contributorsCount++;
 
+        console.log("fund() amount=%d new contributorsCount=%d", msg.value, contributorsCount);        
+
         emit Donation(msg.sender, msg.value, address(this));
     }    
 
@@ -274,6 +278,8 @@ contract Project {
         approvals[msg.sender] = true;
         spendingRequest.approvalsCount++;
 
+        console.log("approveSpendingRequest(srid=%d) approvalsCount=%d", srid,spendingRequest.approvalsCount);           
+
         emit Approval(msg.sender, address(this), srid);
     }
 
@@ -288,6 +294,7 @@ contract Project {
         /* After sufficent approvals the project owner is permitted to transfer
          * the approved funds to the spending request's vendor.
          * -------------------------------------------------------------------- */
+        console.log("completeSpendingRequest(srid=%d", srid);           
 
         // assert srid is given
         require(srid != 0, "srid must be specified");
@@ -304,10 +311,9 @@ contract Project {
         // assert minimum 50% of project contributors have approved
         require(fiftyPercentOrMore(spendingRequest), "A minimum of 50% of project contributors must have approved this spending request before completion.");
 
-        // transfer spending request's amount in wei to the wallet of the vendor
-        Vendor[] memory vendors = citadelia.vendors;
-        //address payable vendorWalletAddress = citadelia.vendors[spendingRequest.vid-1].walletAddress;
-        // vendorWalletAddress.transfer(spendingRequest.amountInWei);
+        // transfer spending request's amount in wei to the wallet of the vendor      
+        address payable vendorWalletAddress = citadelia.getVendorAddress(spendingRequest.vid);
+        vendorWalletAddress.transfer(spendingRequest.amountInWei);
         //vendorWalletAddress.call{value: spendingRequest.amountInWei}(abi.encode(spendingRequest.amountInWei));
 
         // mark this spending request as completed
