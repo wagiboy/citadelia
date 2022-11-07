@@ -75,7 +75,7 @@ contract Citadelia {
         require(vendorAddress != address(0),    "The address of the vendor is required.");
 
         uint vid = vendors.length + 1;
-        console.log("createVendor() vid=%s", vid);
+        console.log("createVendor() vid=%s vid=%d", vid, vid);
 
         Vendor memory vendor = Vendor({
             vid: uint8(vid),
@@ -93,7 +93,7 @@ contract Citadelia {
         require(bytes(description).length != 0, "An description of the project is required.");
         require(minimumContribution != 0,       "A minimum contribution of the project is required.");    
 
-        Project project = new Project(name, description, minimumContribution, this);
+        Project project = new Project(name, description, minimumContribution, address(this));
 
         projects.push(project.getContractAddress());
     }
@@ -166,13 +166,13 @@ contract Project {
     /* -------------------------------------------------
      *  constructor, modifiers, events
      * ------------------------------------------------- */    
-    constructor(string memory _name, string memory _description, uint _minimumContribution, Citadelia _citadelia) {
+    constructor(string memory _name, string memory _description, uint _minimumContribution, address _citadelia) {
         name                = _name;
         description         = _description;
         minimumContribution = _minimumContribution;
-        citadelia           = _citadelia;
+        citadelia           = Citadelia(_citadelia);
 
-        console.log("ctor Project(name=%s)", name);
+        console.log("ctor Project(name='%s') address=%s", name, address(this));
     }    
     
     modifier ownerOnly() {
