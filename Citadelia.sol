@@ -10,23 +10,23 @@ import "hardhat/console.sol";
  *  Citadelia - main contract, acts as 
  *    
  *      factory - for creating Project-contracts 
- *      facade  - for calling interface functions
+ *      home of contributors and vendors
  *
  * ------------------------------------------------ */  
 contract Citadelia {
 
-    address         public owner;
-    Contributor[]   public contributors;
-    Vendor[]        public vendors;
-    address[]       public projects;
-    mapping(address => bool) public projectsHash;  // list of created projects
+    address                  public owner;
+    Contributor[]            public contributors;
+    Vendor[]                 public vendors;
+    address[]                public projects;
+    mapping(address => bool) public projectsHash;   // list of created projects for guard-check purposes
 
     constructor() {
         owner = msg.sender;
     }
 
     modifier ownerOnly() {
-        require(msg.sender == owner, "Callee must be the contract owner to call this function.");
+        require(msg.sender == owner, "Callee must be the Citadelia contract owner to call this function.");
         _;
     } 
 
@@ -34,7 +34,6 @@ contract Citadelia {
      *  Roles/User structs
      * ------------------------------------------------ */  
     struct Contributor {
-        uint8   cid;
         string  name;
         string  username;
         address walletAddress;
@@ -54,11 +53,8 @@ contract Citadelia {
         require(bytes(name).length != 0, "The contributor name is required.");
         require(contributorAddress != address(0), "The address of the contributor is required.");
 
-        uint cid = contributors.length + 1;
-        console.log("createContributor() cid=%s", cid);
-
+        console.log("createContributor('%s')", name);
         Contributor memory contributor = Contributor({
-            cid: uint8(cid),
             name: name,
             username: username,
             walletAddress: contributorAddress
@@ -133,7 +129,7 @@ contract Project {
 
     string  public name;
     string  public description;
-    uint    public minimumContribution;          // e.g 0.001 eth or 1 finney or 1000000000000000 wei
+    uint            public minimumContribution;          // e.g 0.001 eth or 1 finney or 1000000000000000 wei
     mapping(address => bool) contributors;  // list of the addresses of contributors who have donated for this project
     uint8   public contributorsCount;
     SpendingRequest[] spendingRequests;
