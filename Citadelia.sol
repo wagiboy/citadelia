@@ -110,6 +110,7 @@ contract Citadelia {
     }
 
     function getVendorAddress(uint8 vid) public view returns (address payable) {
+        require(vid != 0, "vid must be specified and greater than 0");
         return vendors[vid-1].walletAddress;
     }
 
@@ -190,7 +191,7 @@ contract Project {
         require(bytes(_name).length != 0,        "The name of the spending request is required.");
         require(bytes(_description).length != 0, "An description of the spending request is required.");
         require(_amountToSpend != 0,             "The amountToSpend is required.");
-        require(_vid != 0,                       "The vid of the vendor is required.");
+        require(_vid != 0,                       "The vid of the vendor is required and must be greater than 0.");
 
         spendingRequests.push();
         uint i = spendingRequests.length;
@@ -258,7 +259,7 @@ contract Project {
         /* Project contributors are permitted to approve (vote) for spending requests
          * --------------------------------------------------------------------------- */
         // assert srid is given
-        require(srid != 0, "srid must be specified");
+        require(srid != 0, "srid must be specified and be greater than 0");
 
         // fetching state variables 
         SpendingRequest storage spendingRequest     = spendingRequests[srid-1];
@@ -282,7 +283,8 @@ contract Project {
     function canSpendingRequestBeCompleted(uint8 srid) external view returns (bool) {
         /* returns true if the spending request srid 
          * has 50% or more of the contributer's votes/approvals
-         * ----------------------------------------------------- */        
+         * ----------------------------------------------------- */
+        require(srid != 0, "srid must be specified and be greater than 0");        
         return fiftyPercentOrMore(spendingRequests[srid-1]);
     }
 
@@ -290,11 +292,11 @@ contract Project {
         /* After sufficent approvals the project owner is permitted to transfer
          * the approved funds to the spending request's vendor.
          * -------------------------------------------------------------------- */
-        console.log("completeSpendingRequest(srid=%d)", srid);           
-
         // assert srid is given
-        require(srid != 0, "srid must be specified");
+        require(srid != 0, "srid must be specified and greater than 0");
 
+        console.log("completeSpendingRequest(srid=%d)", srid);           
+       
         // fetching state variables 
         SpendingRequest storage spendingRequest = spendingRequests[srid-1];
         
