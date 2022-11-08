@@ -19,6 +19,7 @@ contract Citadelia {
     Contributor[]   public contributors;
     Vendor[]        public vendors;
     address[]       public projects;
+    mapping(address => bool) public projectsHash;  // list of created projects
 
     constructor() {
         owner = msg.sender;
@@ -37,7 +38,6 @@ contract Citadelia {
         string  name;
         string  username;
         address walletAddress;
-        uint    balance;
     }
 
     struct Vendor {
@@ -45,7 +45,6 @@ contract Citadelia {
         string  name;
         string  description;
         address payable walletAddress;
-        uint    balance;
     }    
 
    /* -------------------------------------------------
@@ -56,14 +55,13 @@ contract Citadelia {
         require(contributorAddress != address(0), "The address of the contributor is required.");
 
         uint cid = contributors.length + 1;
-        //console.log("createContributor() cid=%s", cid);
+        console.log("createContributor() cid=%s", cid);
 
         Contributor memory contributor = Contributor({
             cid: uint8(cid),
             name: name,
             username: username,
-            walletAddress: contributorAddress,
-            balance: contributorAddress.balance
+            walletAddress: contributorAddress
         });
 
         contributors.push(contributor);
@@ -81,8 +79,7 @@ contract Citadelia {
             vid: uint8(vid),
             name: name,
             description: description,
-            walletAddress: vendorAddress,
-            balance: vendorAddress.balance
+            walletAddress: vendorAddress
         });
 
         vendors.push(vendor);
@@ -96,6 +93,7 @@ contract Citadelia {
         Project project = new Project(name, description, minimumContribution, owner);
 
         projects.push(address(project));
+        projectsHash[address(project)] = true;
     }
 
    /* -------------------------------------------------
@@ -110,6 +108,7 @@ contract Citadelia {
     }
 
     function getVendorAddress(uint8 vid) public view returns (address payable) {
+        require(msg.sender == owner || projectsHash[msg.sender]);
         require(vid != 0, "vid must be specified and greater than 0");
         return vendors[vid-1].walletAddress;
     }
@@ -119,22 +118,23 @@ contract Citadelia {
     }
 }
 
-/* ------------------------------------------------------
+/* -------------------------------------------------
  *  
- *  Project - 
- *    must be a contract (and not struct) because structs
- *    are are only programmatic way to store ether
+ *  Project - contract , acts as 
+ *    
+ *      must be a contract because this is the only programmatic way 
+ *     to store ethereum
  *
- * ------------------------------------------------------- */  
+ * ------------------------------------------------ */  
 contract Project {
 
-    address public   owner;
+    address   public owner;
     Citadelia public citadelia;
 
     string  public name;
     string  public description;
-    uint    public minimumContribution;      // e.g 0.001 eth or 1 finney or 1000000000000000 wei
-    mapping(address => bool) contributors;   // list of the addresses of contributors who have donated for this project
+    uint    public minimumContribution;          // e.g 0.001 eth or 1 finney or 1000000000000000 wei
+    mapping(address => bool) contributors;  // list of the addresses of contributors who have donated for this project
     uint8   public contributorsCount;
     SpendingRequest[] spendingRequests;
 
@@ -163,18 +163,18 @@ contract Project {
     /* -------------------------------------------------
      *  constructor, modifiers, events
      * ------------------------------------------------- */    
-    constructor(string memory _name, string memory _description, uint _minimumContribution, address _citadeliasOwner) {
+    constructor(string memory _name, string memory _description, uint _minimumContribution, address citadeliasOwner) {
         name                = _name;
         description         = _description;
         minimumContribution = _minimumContribution;
-        owner               = _citadeliasOwner;
+        owner               = citadeliasOwner;
         citadelia           = Citadelia(msg.sender);
 
         console.log("ctor Project() address=%s", address(this));
     }    
     
     modifier ownerOnly() {
-        require(msg.sender == owner, "Callee must be the Citadelia's contract owner to call this function.");
+        require(msg.sender == owner, "Callee must be the contract owner to call this function.");
         _;
     } 
 
@@ -206,12 +206,11 @@ contract Project {
     /* -------------------------------------------------
      *  getter functions - returning arrays of structs
      * ------------------------------------------------ */ 
-    function getContractAddress() public view returns (address)  {
-        require(msg.sender == owner || msg.sender == address(citadelia), "Callee must be the Citadelia's owner or the owner of Project to call this function.");
+    function getContractAddress() public view ownerOnly returns (address) {
         return address(this);
     }
 
-    function getBalance() external view ownerOnly returns (uint)  {
+    function getBalance() external view ownerOnly returns (uint) {
         return address(this).balance;
     }
 
@@ -254,7 +253,7 @@ contract Project {
     }    
 
 
-    function approveSpendingRequest(uint8 srid) external ownerOnly {
+    function approveSpendingRequest(uint8 srid) external {
         /* Project contributors are permitted to approve (vote) for spending requests
          * --------------------------------------------------------------------------- */
         // assert srid is given
@@ -279,7 +278,7 @@ contract Project {
         emit Approval(msg.sender, address(this), srid);
     }
 
-    function canSpendingRequestBeCompleted(uint8 srid) external view ownerOnly returns (bool) {
+    function canSpendingRequestBeCompleted(uint8 srid) external view returns (bool) {
         /* returns true if the spending request srid 
          * has 50% or more of the contributer's votes/approvals
          * ----------------------------------------------------- */
@@ -287,7 +286,7 @@ contract Project {
         return fiftyPercentOrMore(spendingRequests[srid-1]);
     }
 
-    function completeSpendingRequest(uint8 srid) external ownerOnly {
+    function completeSpendingRequest(uint8 srid) external {
         /* After sufficent approvals the project owner is permitted to transfer
          * the approved funds to the spending request's vendor.
          * -------------------------------------------------------------------- */
@@ -322,7 +321,7 @@ contract Project {
     /* -------------------------------------------------
      *  internal helper functions
      * ------------------------------------------------ */ 
-    function concat(string memory a, string memory b) internal pure returns(string memory) {
+    function concat(string memory a, string memory b) internal pure returns(string memory){
         /* concatenation of 2 strings 
          * -------------------------- */
         return (string(abi.encodePacked(a, b)));
