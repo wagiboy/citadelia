@@ -1,30 +1,24 @@
-/* ---------------------------------------------------------------
- * Represents the TTZ ERC20 smart contract
- * --------------------------------------------------------------- */  
-import env      from '@/env.js'
+/* -----------------------------------------------------------------------
+ * Web3 interface to the Solidity Citadelia contract on the goerli network
+ * ----------------------------------------------------------------------- */  
 import store    from '@/store.js'
 import eventBus from '@/eventBus.js'
+import env      from '@/web3/env.js'
 import abi      from '@/web3/abi.js'
 import web3     from '@/web3/web3.js'
 
 class CitadeliaContract {
- /* Represents the TTZ Smart contract object. 
-  * This object interacts with the polygon blockchain 
-  * Provides getter methods to fetch data from the smart contract. 
-  * --------------------------------------------------------------*/
-
+ 
   constructor() {  
-   /* Inititializes the TTZ smart contract object
-    */
     const gasPrice = 2 * store.gasPriceInGwei * 10 ** 9
 
-    this.contract = new web3.web3lib.eth.Contract(abi, env.contractAddress, { from: env.walletAddress, gasPrice: gasPrice }) 
+    this.contract = new web3.web3lib.eth.Contract(abi, env.mainContrAddr, { from: env.gasWalletAddr, gasPrice: gasPrice }) 
     
-    // console.log('Contract::constructor() instantiated TTZToken contract')
-    // console.log(this.contract)
+    console.log('CitadeliaContract::constructor() instantiated TTZToken contract')
+    console.log(this.contract)
   }
 
-  async fetchTokenName() {
+  async fetchContributors() {
     try {
       // console.log('Contract::fetchTokenName()')
       
@@ -224,4 +218,4 @@ class CitadeliaContract {
   }
 }
 
-export default new CitadeliaContract()
+export default new CitadeliadContract()

@@ -1,6 +1,8 @@
-import Vue          from 'vue'
-import VueRouter    from 'vue-router'
-import Home         from '@/views/Home.vue'
+import Vue        from 'vue'
+import VueRouter  from 'vue-router'
+import Home       from '@/views/Home.vue'
+import Login      from '@/views/Login.vue'
+import User       from '@/views/User.vue'
 
 Vue.use(VueRouter)
 
@@ -15,7 +17,25 @@ const routes = [
         content: 'Citadelia - A public works funds management system for Free Cities'
       }]
     }    
-  }
+  },{
+    path: '/login',
+    component: Login,
+    meta: {
+      title: 'Citadelia login',
+      metaTags: [{
+        name: 'description',
+        content: 'Log into .'
+      }],
+      hideNavbar: true
+    }      
+  },{
+    path: '/user',
+    component: User,
+    meta: {
+      title: 'User dashboard',
+      hideLogin: true     
+    }
+  }    
 ]
 
 const router = new VueRouter({
