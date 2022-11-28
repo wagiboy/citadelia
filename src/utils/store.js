@@ -4,6 +4,8 @@ import Vue from 'vue'
  * It's a store for VUE apps, similar to VUEX or Pinia */
 const store = Vue.observable({ 
   
+  isUserLoggedIn: false,
+  
   // blockchain data
   gasPriceInGwei: null,
   blockNumber: null,

@@ -23,10 +23,10 @@
 				<p class="title pa-0 ma-0 blue-grey--text font-weight-regular">citadelia</p>
 			</a>
 			<v-spacer></v-spacer>
-
+	
 			<!-- navigation menu -->
 			<v-card flat class="hidden-sm-and-down">
-				<v-btn text class="text-capitalize" v-for="link in links" :key="link.title" :to="link.route" v-show="showLink(link)">
+				<v-btn text class="text-capitalize" v-for="link in links" :key="link.title" :to="link.route" v-show="showLink(link.title)">
 					<v-icon class="blue-grey--text">mdi-{{ link.icon }}</v-icon>
 					<span class="blue-grey--text">{{ link.title }}</span>
 				</v-btn>
@@ -53,6 +53,7 @@
 </template>
 
 <script>
+import store from '@/utils/store.js'
 export default {
   name: 'Navbar',
   components: { },  
@@ -60,25 +61,36 @@ export default {
 		drawer: false,
 		links: [
 			{ title: 'Home', route: '/', icon: 'home' },
+			{ title: 'MyAccount', route: '/myaccount',  icon: 'account' },
 			{ title: 'Login', route: '/login',  icon: 'login' },
-			{ title: 'User', route: '/user',  icon: 'account' }
+			{ title: 'Logout', route: '/logout',  icon: 'logout' }
 		]
 	}),
+	created() {
+		store.isUserLoggedIn = this.$cookies.get('login')
+	},
  	methods: {
 		toggleDrawer() {
 			this.drawer = !this.drawer
-		}
-	},
-	computed: {
-		showLink(link) {
-			if (link.title == 'Login') {
-				if ($route.meta.hideLogin) return false;
+		},
+		showLink(title) {
+			switch(title) {
+				case 'MyAccount':					
+					if (!store.isUserLoggedIn) return false;
+					break;
+
+				case 'Login':
+					if (store.isUserLoggedIn) return false;
+					break;
+
+				case 'Logout':
+					if (!store.isUserLoggedIn) return false;
+					break;
+
+				default: // e.g. Home
+					return true;
 			}
-			else if (condition) {
-				
-			} else {
-				
-			}
+			return true;
 		}
 	}
 }

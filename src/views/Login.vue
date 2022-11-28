@@ -30,18 +30,18 @@
 
       <v-card-text>
         <v-form>
-          <!-- email input -->
+          <!-- username input -->
           <v-text-field
             outlined
             label="Username"
             prepend-icon="mdi-account"
-            v-model="email"
-            @blur="onBlurEmail"
-            @focus="resetEmailError"
-            :rules="[emailRules]"
+            v-model="username"
+            @blur="onBlurUsername"
+            @focus="resetUsernameError"
+            :rules="[usernameRules]"
             :error="bCredentialsUnconfirmed"
-            :error-messages="errMsg.email"
-            :append-icon="appendIcon.email"
+            :error-messages="errMsg.username"
+            :append-icon="appendIcon.username"
           />
 
           <!-- password input -->
@@ -66,7 +66,8 @@
             <v-btn
               x-large
               block
-              color="primary"          
+              color="primary"
+              @click="submit"          
               :loading="bLoadingLogin"
               >Sign in</v-btn
             >
@@ -78,87 +79,89 @@
 </template>
 
 <script>
+import store from '@/utils/store.js'
 export default {
-  name: 'App',
+  name: 'Login',
   components: {},
   data() {
     return {
-      email: '',
-      password: '',
-      rememberMe: '',
+      username: '',
+      password: '',    
       bShowPassword: false,
       rulesEnabled: {
-        email: false,
+        username: false,
         password: false
       },
       errMsg: {
-        email: '',
+        username: '',
         password: ''
       },      
       appendIcon: {
-        email: '',
+        username: '',
         password: ''
       },
       bPasswordInvalid: false,
       bCredentialsUnconfirmed: null,
       bLoadingLogin: false,
       bLoadingSignup: false,
+      credentials: [{ 
+        username: 'dirk', 
+        password: 'frh5MrKwX7VoXR',
+      },{
+        username: 'jens', 
+        password: 'N7sQ3DO3mVPOkh',
+      },{
+        username: 'peter', 
+        password: 'ppba9JokJxaYqf',
+      }
+		]      
     }
   },
   methods: {
     // ----------------------------------
-    //     email methods
+    //     username methods
     // ----------------------------------
-    emailRules(value) {
-      if (value.length == 0) {
-        return true
-      }
-      if (!this.rulesEnabled.email && value.length < 6) {
-        return true
-      }
-      if (value.length >= 6) {
-        this.rulesEnabled.email = true
-      }
-      if (this.rulesEnabled.email && value.length < 6) {        
-        this.appendIcon.email = 'mdi-exclamation'
-        return "Your email address is too short."  
+    usernameRules(value) {
+      if (value.length > 10) {      
+        this.appendIcon.username = 'mdi-exclamation'
+        return "Your username is too long."
       } 
-      if (value.length > 64) {      
-        this.appendIcon.email = 'mdi-exclamation'
-        return "Your email address is too long."
-      } 
-      if ( /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(value) ) {      
-        this.appendIcon.email = 'mdi-check'
+      if (value.length <= 10) {      
+        this.resetUsernameError()
       } 
       return true
     },  
-    onBlurEmail() {
-      if (this.email.length == 0 ) {
-        this.rulesEnabled.email = false
-        this.appendIcon.email = ''
+    onBlurUsername() {
+      if (this.username.length == 0 ) {
+        this.rulesEnabled.username = false
+        this.appendIcon.username = ''
       }
       else {
-        this.validateEmail()
+        this.validateUsername()
       }
     },
-    validateEmail() {
-      if (this.email.length == 0 ) {
-        this.appendIcon.email = 'mdi-exclamation'
-        this.errMsg.email = "Please enter your TutorZ email address."
+    validateUsername() {
+      if (this.username.length == 0 ) {
+        this.appendIcon.username = 'mdi-exclamation'
+        this.errMsg.username = "Please enter your Citadelia username."
       }
-      else if ( /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(this.email) ) {      
-        this.appendIcon.email = 'mdi-check'
-        this.errMsg.email = ''
+      if (this.username.length < 4) {        
+        this.appendIcon.username = 'mdi-exclamation'
+         this.errMsg.username = "Your username is too short."  
       } 
-      else {
-        this.appendIcon.email = 'mdi-exclamation'
-        this.errMsg.email = "Invalid email address. An email looks like info@tutorz.com"
-      }
+      if (this.username.length > 10) {      
+        this.appendIcon.username = 'mdi-exclamation'
+        this.errMsg.username = "Your username is too long."
+      }       
+      else {    
+        this.appendIcon.username = 'mdi-check'
+        this.errMsg.username = ''
+      } 
     },
-    resetEmailError() {
-      this.errMsg.email = ''
+    resetUsernameError() {
+      this.errMsg.username = ''
       this.bCredentialsUnconfirmed = false
-      this.appendIcon.email = ''
+      this.appendIcon.username = ''
     },  
 
     // ----------------------------------
@@ -173,13 +176,13 @@ export default {
       }
       if (value.length >= 6) {
         this.rulesEnabled.password = true
-        this.appendIcon.password = 'mdi-check'
+        this.appendIcon.password = this.eyeIcon
       }
       if (this.rulesEnabled.password && value.length < 6) {        
         this.appendIcon.password = 'mdi-exclamation'
         return "Your password must be 6 characters or more."  
       } 
-      if (this.rulesEnabled.password && value.length > 64) {        
+      if (this.rulesEnabled.password && value.length > 20) {        
         this.appendIcon.password = 'mdi-exclamation'
         return "Your password is too long."
       } 
@@ -196,7 +199,7 @@ export default {
     validatePassword() {
       if (this.password.length == 0 ) {
         this.appendIcon.password = 'mdi-exclamation'
-        this.errMsg.password = "Please enter your TutorZ password."
+        this.errMsg.password = "Please enter your Citadelia password."
       }
       else if (this.password.length < 6 ) {
         this.appendIcon.password = 'mdi-exclamation'
@@ -223,44 +226,51 @@ export default {
     //    submit methods 
     // ----------------------------------
     submit() {
-      this.validateEmail()
+      console.log('submit() username=')
+      this.validateUsername()
       this.validatePassword()
-      if (this.errMsg.email == '' && this.errMsg.password == '') {
+      if (this.errMsg.username == '' && this.errMsg.password == '') {
+        console.log('no login error')
         this.bLoadingLogin = true;      
-        this.confirmCredentials()
-      } 
-    },
-    confirmCredentials() {
-      // axios
-      //   .post("http://127.0.0.1/api/login/", { email: this.email, password: this.password, rememberMe: this.rememberMe } )
-      //   .then(response => {
-      //     this.handleConfirmation( response )
-      //   })
-      //   .catch(error => {
-      //     console.log("Axios error in api/login/ " + error) // eslint-disable-line
-      //   })       
-    },
-    handleConfirmation( response ) {
-      if( response.data.status == 'success' ) {            
-        //console.log("Credentials confirmed. response.data=" + JSON.stringify(response) ) // eslint-disable-line
-        window.location = 'http://127.0.0.1/tutor?UD5fxQ=' + response.data.UD5fxQ;     
-      } 
-      else if( response.data.status == 'error' ) {         
-        //console.log("Credentials unconfirmed. " + response.data.errmsg ) // eslint-disable-line
-        this.bCredentialsUnconfirmed = true
-        this.bShowPassword = true      
-        this.bLoadingLogin = false 
-        this.errMsg.password  = "Email and/or password didn't match our records. Try again."
-        this.appendIcon.email = 'mdi-exclamation'
-        this.appendIcon.password = 'mdi-exclamation'
-      }
-      else {
-        // console.log("Error in api/login. --- dumping response ---" + response.data ) // eslint-disable-line
+        if (this.areCredentialsValid()) {
+          console.log("Credentials match. username='"+this.username+"' password='"+this.password+"'") // eslint-disable-line
+          this.logUserIn()
+        } 
+        else {
+          console.log("Credentials unconfirmed. username='"+this.username+"' password='"+this.password+"'") // eslint-disable-line
+          this.bCredentialsUnconfirmed = true
+          this.bShowPassword = true      
+          this.bLoadingLogin = false 
+          this.errMsg.password = "Username and/or password didn't match our records. Try again."
+          this.appendIcon.username = 'mdi-exclamation'
+          this.appendIcon.password = 'mdi-exclamation'
+        }
+      } else {
+        console.log('login failure')
       }
     },
-    redirectToSignup() {
-      this.bLoadingSignup = true;      
-      window.location = '/user'      
+    areCredentialsValid() {
+      console.log('areCredentialsValid()')
+      var valid = false
+      this.credentials.every(credential => {
+        console.log("user provided username='"+this.username+"' password='"+this.password+"'")
+        console.log("on record username='"+credential.username+"' password='"+credential.password+"'")
+
+        if (this.username === credential.username && this.password === credential.password) {
+          console.log("username and password are correct")
+          valid = true
+          return false // returning false ends the iteration
+        }
+
+        // need to return true from the callback function to continue iteration
+        return true
+      });
+      return valid;
+    },
+    logUserIn() {  
+      store.isUserLoggedIn = true
+      this.$router.push('/myaccount');  
+      this.$cookies.set('login', true);      
     }
   },
   computed: {

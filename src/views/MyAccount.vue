@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p class="title text-center">User Dashboard</p>  
+    <p class="title text-center">My Account</p>  
   </div>
 </template>
 

@@ -1,8 +1,8 @@
 /* -----------------------------------------------------------------------
  * Web3 interface to the Solidity Citadelia contract on the goerli network
  * ----------------------------------------------------------------------- */  
-import store    from '@/store.js'
-import eventBus from '@/eventBus.js'
+import store    from '@/utils/store.js'
+import eventBus from '@/utils/eventBus.js'
 import env      from '@/web3/env.js'
 import abi      from '@/web3/abi.js'
 import web3     from '@/web3/web3.js'

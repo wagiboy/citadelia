@@ -2,8 +2,8 @@
  * Represents the TTZ ERC20 smart contract
  * --------------------------------------------------------------- */  
 import env      from '@/env.js'
-import store    from '@/store.js'
-import eventBus from '@/eventBus.js'
+import store    from '@/utils/store.js'
+import eventBus from '@/utils/eventBus.js'
 import abi      from '@/web3/abi.js'
 import web3     from '@/web3/web3.js'
 

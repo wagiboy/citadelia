@@ -19,9 +19,6 @@ export default {
   components: { Navbar, Footer },  
   data: () => ({
     //
-  }),
-  created() {
-    console.log('App::created()')
-  }
+  })
 };
 </script>
