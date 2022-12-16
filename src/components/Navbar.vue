@@ -61,6 +61,9 @@ export default {
 		drawer: false,
 		links: [
 			{ title: 'Home', route: '/', icon: 'home' },
+			{ title: 'Vendors', route: '/vendor',  icon: 'cart' },
+			{ title: 'Projects', route: '/project',  icon: 'hammer-wrench' },
+			{ title: 'About', route: '/about',  icon: 'city-variant' },
 			{ title: 'MyAccount', route: '/myaccount',  icon: 'account' },
 			{ title: 'Login', route: '/login',  icon: 'login' },
 			{ title: 'Logout', route: '/logout',  icon: 'logout' }

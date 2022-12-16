@@ -13,7 +13,7 @@ export default new Vuetify({
         success:  '#009933',  // green
         info:     '#F2BE31',  // gold
 
-        gold: '#F2BE31',
+        gold: '#f6dea6',
         green: '#009933',
         bluegrey: '#607d8b',
         white: '#fff'

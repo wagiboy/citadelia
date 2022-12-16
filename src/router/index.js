@@ -1,6 +1,9 @@
 import Vue        from 'vue'
 import VueRouter  from 'vue-router'
 import Home       from '@/views/Home.vue'
+import Vendor     from '@/views/Vendor.vue'
+import Project    from '@/views/Project.vue'
+import About      from '@/views/About.vue'
 import Login      from '@/views/Login.vue'
 import Logout     from '@/views/Logout.vue'
 import MyAccount  from '@/views/MyAccount.vue'
@@ -18,7 +21,30 @@ const routes = [
         name: 'description',
         content: 'Citadelia - A public works funds management system for Free Cities'
       }]
-    }    
+    }
+  },{    
+    path: '/vendor',
+    component: Vendor,
+    meta: {
+      title: 'Vendors',
+      metaTags: [{
+        name: 'description',
+        content: "Vendors provide products and services to Free Cities projects. They are paid directly out of the project's treasury, thus avoiding any chance of embezzlement."
+      }]
+    }   
+  },{
+    path: '/project/:pid',
+    component: Project,
+    meta: {
+      title: 'Projects with Spending Requests'
+    },
+    props: true
+  },{
+    path: '/about',
+    component: About,
+    meta: {
+      title: 'About'
+    }
   },{
     path: '/login',
     component: Login,
@@ -38,8 +64,8 @@ const routes = [
     component: MyAccount,
     meta: {
       title: 'My Account'
-    }
-  }    
+    }     
+  }
 ]
 
 const router = new VueRouter({
