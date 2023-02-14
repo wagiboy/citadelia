@@ -7,10 +7,10 @@ import "hardhat/console.sol";
 
 /* -------------------------------------------------
  *  
- *  Citadelia - main contract, acts as 
- *    
- *      factory - for creating Project-contracts 
- *      home of contributors and vendors
+ *  Citadelia - main contract
+ *
+ *    Acts as factory for creating Project-contracts.
+ *    Home of contributors and vendors.
  *
  * ------------------------------------------------ */  
 contract Citadelia {
@@ -114,14 +114,15 @@ contract Citadelia {
     }
 }
 
-/* -------------------------------------------------
+/* --------------------------------------------------------------------
  *  
- *  Project - contract , acts as 
+ *  Project - contract
  *    
- *      must be a contract because this is the only programmatic way 
- *     to store ethereum
+ *    Must be separated from Citadelia contract because 
+ *    this is the only way to store ether balances programmaticly.
+ *    (As to EOAs which are external, require private keys and signing.
  *
- * ------------------------------------------------ */  
+ * -------------------------------------------------------------------- */  
 contract Project {
 
     address   public owner;
@@ -129,8 +130,8 @@ contract Project {
 
     string  public name;
     string  public description;
-    uint            public minimumContribution;          // e.g 0.001 eth or 1 finney or 1000000000000000 wei
-    mapping(address => bool) contributors;  // list of the addresses of contributors who have donated for this project
+    uint            public minimumContribution;     // e.g 0.001 eth or 1 finney or 1000000000000000 wei
+    mapping(address => bool) contributors;          // list of the addresses of contributors who have donated for this project
     uint8   public contributorsCount;
     SpendingRequest[] spendingRequests;
 
